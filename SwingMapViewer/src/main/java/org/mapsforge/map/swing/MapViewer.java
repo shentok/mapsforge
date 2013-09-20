@@ -32,7 +32,7 @@ import org.mapsforge.map.layer.renderer.TileRendererLayer;
 import org.mapsforge.map.model.MapViewPosition;
 import org.mapsforge.map.model.Model;
 import org.mapsforge.map.model.common.PreferencesFacade;
-import org.mapsforge.map.rendertheme.InternalRenderTheme;
+import org.mapsforge.map.rendertheme.ExternalRenderTheme;
 import org.mapsforge.map.rendertheme.rule.RenderThemeHandler;
 import org.mapsforge.map.swing.controller.MapViewComponentListener;
 import org.mapsforge.map.swing.controller.MouseEventListener;
@@ -93,7 +93,8 @@ public final class MapViewer {
 	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) throws IOException, SAXException, ParserConfigurationException {
 		TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapViewPosition, GRAPHIC_FACTORY);
 		tileRendererLayer.setMapFile(new File("/windows/d/MoNav/Germany/rendering_mapsforge/map.map"));
-		tileRendererLayer.setRenderTheme(RenderThemeHandler.getRenderTheme(GRAPHIC_FACTORY, InternalRenderTheme.OSMARENDER));
+		ExternalRenderTheme renderTheme = new ExternalRenderTheme(new File("/home/shentey/Projekte/mapsforge/src/mapsforge-map/src/main/resources/osmarender/osmarender.xml"));
+		tileRendererLayer.setRenderTheme(RenderThemeHandler.getRenderTheme(GRAPHIC_FACTORY, renderTheme));
 		return tileRendererLayer;
 	}
 
