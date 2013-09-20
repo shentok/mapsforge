@@ -108,13 +108,6 @@ class IndexCache {
 	}
 
 	/**
-	 * Destroy the cache at the end of its lifetime.
-	 */
-	void destroy() {
-		this.map.clear();
-	}
-
-	/**
 	 * Returns the index entry of a block in the given map file. If the required index entry is not cached, it will be
 	 * read from the map file index and put in the cache.
 	 * 

@@ -26,21 +26,17 @@ import org.mapsforge.map.reader.MapDatabase;
 import org.mapsforge.map.rendertheme.rule.RenderTheme;
 
 public class TileRendererLayer extends TileLayer<RendererJob> {
-	private final MapDatabase mapDatabase;
+	private MapDatabase mapDatabase;
 	private File mapFile;
-	private final MapWorker mapWorker;
+	private MapWorker mapWorker;
+	private final GraphicFactory graphicFactory;
 	private float textScale;
 	private RenderTheme renderTheme;
 
 	public TileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition, GraphicFactory graphicFactory) {
 		super(tileCache, mapViewPosition, graphicFactory);
 
-		this.mapDatabase = new MapDatabase();
-		DatabaseRenderer databaseRenderer = new DatabaseRenderer(this.mapDatabase, graphicFactory);
-
-		this.mapWorker = new MapWorker(tileCache, this.jobQueue, databaseRenderer, this);
-		this.mapWorker.start();
-
+		this.graphicFactory = graphicFactory;
 		this.textScale = 1;
 	}
 
@@ -59,7 +55,12 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 	public void setMapFile(File mapFile) throws IOException {
 		this.mapFile = mapFile;
 		// TODO fix this
-		this.mapDatabase.openFile(mapFile);
+		this.mapDatabase = new MapDatabase(mapFile);
+
+		DatabaseRenderer databaseRenderer = new DatabaseRenderer(this.mapDatabase, graphicFactory);
+
+		this.mapWorker = new MapWorker(tileCache, this.jobQueue, databaseRenderer, this);
+		this.mapWorker.start();
 	}
 
 	public void setTextScale(float textScale) {
@@ -84,7 +85,7 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 
 	@Override
 	protected void onDestroy() {
-		new DestroyThread(this.mapWorker, this.mapDatabase).start();
+		new DestroyThread(this.mapWorker).start();
 		super.onDestroy();
 	}
 

@@ -31,7 +31,7 @@ import org.mapsforge.map.model.MapViewPosition;
 public abstract class TileLayer<T extends Job> extends Layer {
 	protected final JobQueue<T> jobQueue;
 	private final Matrix matrix;
-	private final TileCache tileCache;
+	protected final TileCache tileCache;
 
 	public TileLayer(TileCache tileCache, MapViewPosition mapViewPosition, GraphicFactory graphicFactory) {
 		super();

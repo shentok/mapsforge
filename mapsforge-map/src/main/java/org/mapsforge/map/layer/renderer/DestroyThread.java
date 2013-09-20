@@ -14,17 +14,13 @@
  */
 package org.mapsforge.map.layer.renderer;
 
-import org.mapsforge.map.reader.MapDatabase;
-
 class DestroyThread extends Thread {
-	private final MapDatabase mapDatabase;
 	private final Thread thread;
 
-	DestroyThread(Thread thread, MapDatabase mapDatabase) {
+	DestroyThread(Thread thread) {
 		super();
 
 		this.thread = thread;
-		this.mapDatabase = mapDatabase;
 	}
 
 	@Override
@@ -35,8 +31,6 @@ class DestroyThread extends Thread {
 		} catch (InterruptedException e) {
 			// restore the interrupted status
 			interrupt();
-		} finally {
-			this.mapDatabase.closeFile();
 		}
 	}
 }

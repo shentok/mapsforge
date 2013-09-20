@@ -198,38 +198,20 @@ public class MapDatabase {
 	 */
 	private static final int WAY_NUMBER_OF_TAGS_BITMASK = 0x0f;
 
-	private IndexCache databaseIndexCache;
-	private long fileSize;
-	private RandomAccessFile inputFile;
-	private MapFileHeader mapFileHeader;
-	private ReadBuffer readBuffer;
+	private final IndexCache databaseIndexCache;
+	private final long fileSize;
+	private final RandomAccessFile inputFile;
+	private final MapFileHeader mapFileHeader;
+	private final ReadBuffer readBuffer;
 	private String signatureBlock;
 	private String signaturePoi;
 	private String signatureWay;
 	private double tileLatitude;
 	private double tileLongitude;
 
-	/**
-	 * Closes the map file and destroys all internal caches. Has no effect if no map file is currently opened.
-	 */
-	public void closeFile() {
-		try {
-			this.mapFileHeader = null;
-
-			if (this.databaseIndexCache != null) {
-				this.databaseIndexCache.destroy();
-				this.databaseIndexCache = null;
-			}
-
-			if (this.inputFile != null) {
-				this.inputFile.close();
-				this.inputFile = null;
-			}
-
-			this.readBuffer = null;
-		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, null, e);
-		}
+	@SuppressWarnings("unused")
+	private MapDatabase() {
+		throw new IllegalStateException();
 	}
 
 	/**
@@ -261,17 +243,12 @@ public class MapDatabase {
 	 * @throws IllegalArgumentException
 	 *             if the given map file is null.
 	 */
-	public void openFile(File mapFile) throws IOException {
-		if (mapFile == null) {
-			throw new IllegalArgumentException("mapFile must not be null");
-		}
-
-		// make sure to close any previously opened file first
-		closeFile();
-
+	public MapDatabase(File mapFile) throws IOException {
 		// open the file in read only mode
 		this.inputFile = new RandomAccessFile(mapFile, READ_ONLY_MODE);
 		this.fileSize = this.inputFile.length();
+
+		this.databaseIndexCache = new IndexCache(this.inputFile, INDEX_CACHE_SIZE);
 
 		this.readBuffer = new ReadBuffer(this.inputFile);
 		this.mapFileHeader = new MapFileHeader();
@@ -287,7 +264,6 @@ public class MapDatabase {
 	 */
 	public MapReadResult readMapData(Tile tile) {
 		try {
-			prepareExecution();
 			QueryParameters queryParameters = new QueryParameters();
 			queryParameters.queryZoomLevel = this.mapFileHeader.getQueryZoomLevel(tile.zoomLevel);
 
@@ -373,12 +349,6 @@ public class MapDatabase {
 		if (this.mapFileHeader.getMapFileInfo().debugFile) {
 			LOGGER.warning(DEBUG_SIGNATURE_WAY + this.signatureWay);
 			LOGGER.warning(DEBUG_SIGNATURE_BLOCK + this.signatureBlock);
-		}
-	}
-
-	private void prepareExecution() {
-		if (this.databaseIndexCache == null) {
-			this.databaseIndexCache = new IndexCache(this.inputFile, INDEX_CACHE_SIZE);
 		}
 	}
 
