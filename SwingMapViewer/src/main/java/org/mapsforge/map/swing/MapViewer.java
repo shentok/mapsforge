@@ -15,7 +15,10 @@
 package org.mapsforge.map.swing;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.prefs.Preferences;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.mapsforge.core.graphics.GraphicFactory;
 import org.mapsforge.map.awt.AwtGraphicFactory;
@@ -30,17 +33,19 @@ import org.mapsforge.map.model.MapViewPosition;
 import org.mapsforge.map.model.Model;
 import org.mapsforge.map.model.common.PreferencesFacade;
 import org.mapsforge.map.rendertheme.InternalRenderTheme;
+import org.mapsforge.map.rendertheme.rule.RenderThemeHandler;
 import org.mapsforge.map.swing.controller.MapViewComponentListener;
 import org.mapsforge.map.swing.controller.MouseEventListener;
 import org.mapsforge.map.swing.util.JavaUtilPreferences;
 import org.mapsforge.map.swing.view.MainFrame;
 import org.mapsforge.map.swing.view.MapView;
 import org.mapsforge.map.swing.view.WindowCloseDialog;
+import org.xml.sax.SAXException;
 
 public final class MapViewer {
 	private static final GraphicFactory GRAPHIC_FACTORY = AwtGraphicFactory.INSTANCE;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
 		MapView mapView = createMapView();
 		addLayers(mapView);
 
@@ -54,7 +59,7 @@ public final class MapViewer {
 		mainFrame.setVisible(true);
 	}
 
-	private static void addLayers(MapView mapView) {
+	private static void addLayers(MapView mapView) throws IOException, SAXException, ParserConfigurationException {
 		Layers layers = mapView.getLayerManager().getLayers();
 		TileCache tileCache = createTileCache();
 
@@ -85,10 +90,10 @@ public final class MapViewer {
 		return new TwoLevelTileCache(firstLevelTileCache, secondLevelTileCache);
 	}
 
-	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) {
+	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) throws IOException, SAXException, ParserConfigurationException {
 		TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapViewPosition, GRAPHIC_FACTORY);
 		tileRendererLayer.setMapFile(new File("/windows/d/MoNav/Germany/rendering_mapsforge/map.map"));
-		tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
+		tileRendererLayer.setRenderTheme(RenderThemeHandler.getRenderTheme(GRAPHIC_FACTORY, InternalRenderTheme.OSMARENDER));
 		return tileRendererLayer;
 	}
 

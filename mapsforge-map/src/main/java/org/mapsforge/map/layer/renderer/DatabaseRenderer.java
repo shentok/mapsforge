@@ -14,14 +14,9 @@
  */
 package org.mapsforge.map.layer.renderer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.mapsforge.core.graphics.Bitmap;
 import org.mapsforge.core.graphics.GraphicFactory;
@@ -37,10 +32,7 @@ import org.mapsforge.map.reader.PointOfInterest;
 import org.mapsforge.map.reader.Way;
 import org.mapsforge.map.reader.header.MapFileInfo;
 import org.mapsforge.map.rendertheme.RenderCallback;
-import org.mapsforge.map.rendertheme.XmlRenderTheme;
 import org.mapsforge.map.rendertheme.rule.RenderTheme;
-import org.mapsforge.map.rendertheme.rule.RenderThemeHandler;
-import org.xml.sax.SAXException;
 
 /**
  * A DatabaseRenderer renders map tiles by reading from a {@link MapDatabase}.
@@ -48,7 +40,6 @@ import org.xml.sax.SAXException;
 public class DatabaseRenderer implements RenderCallback {
 	private static final Byte DEFAULT_START_ZOOM_LEVEL = Byte.valueOf((byte) 12);
 	private static final byte LAYERS = 11;
-	private static final Logger LOGGER = Logger.getLogger(DatabaseRenderer.class.getName());
 	private static final double STROKE_INCREASE = 1.5;
 	private static final byte STROKE_MIN_ZOOM_LEVEL = 12;
 	private static final Tag TAG_NATURAL_WATER = new Tag("natural", "water");
@@ -84,7 +75,7 @@ public class DatabaseRenderer implements RenderCallback {
 	private List<PointTextContainer> nodes;
 	private final List<SymbolContainer> pointSymbols;
 	private Point poiPosition;
-	private XmlRenderTheme previousJobTheme;
+	private RenderTheme previousJobTheme;
 	private float previousTextScale;
 	private byte previousZoomLevel;
 	private RenderTheme renderTheme;
@@ -123,9 +114,9 @@ public class DatabaseRenderer implements RenderCallback {
 	public Bitmap executeJob(RendererJob rendererJob) {
 		this.currentRendererJob = rendererJob;
 
-		XmlRenderTheme jobTheme = rendererJob.xmlRenderTheme;
+		RenderTheme jobTheme = rendererJob.renderTheme;
 		if (!jobTheme.equals(this.previousJobTheme)) {
-			this.renderTheme = getRenderTheme(jobTheme);
+			this.renderTheme = jobTheme;
 			if (this.renderTheme == null) {
 				this.previousJobTheme = null;
 				return null;
@@ -293,19 +284,6 @@ public class DatabaseRenderer implements RenderCallback {
 			}
 			this.ways.add(innerWayList);
 		}
-	}
-
-	private RenderTheme getRenderTheme(XmlRenderTheme jobTheme) {
-		try {
-			return RenderThemeHandler.getRenderTheme(this.graphicFactory, jobTheme);
-		} catch (ParserConfigurationException e) {
-			LOGGER.log(Level.SEVERE, null, e);
-		} catch (SAXException e) {
-			LOGGER.log(Level.SEVERE, null, e);
-		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, null, e);
-		}
-		return null;
 	}
 
 	private void processReadMapData(MapReadResult mapReadResult) {

@@ -22,14 +22,14 @@ import org.mapsforge.map.layer.TileLayer;
 import org.mapsforge.map.layer.cache.TileCache;
 import org.mapsforge.map.model.MapViewPosition;
 import org.mapsforge.map.reader.MapDatabase;
-import org.mapsforge.map.rendertheme.XmlRenderTheme;
+import org.mapsforge.map.rendertheme.rule.RenderTheme;
 
 public class TileRendererLayer extends TileLayer<RendererJob> {
 	private final MapDatabase mapDatabase;
 	private File mapFile;
 	private final MapWorker mapWorker;
 	private float textScale;
-	private XmlRenderTheme xmlRenderTheme;
+	private RenderTheme renderTheme;
 
 	public TileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition, GraphicFactory graphicFactory) {
 		super(tileCache, mapViewPosition, graphicFactory);
@@ -51,8 +51,8 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 		return this.textScale;
 	}
 
-	public XmlRenderTheme getXmlRenderTheme() {
-		return this.xmlRenderTheme;
+	public RenderTheme getRenderTheme() {
+		return this.renderTheme;
 	}
 
 	public void setMapFile(File mapFile) {
@@ -65,13 +65,13 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 		this.textScale = textScale;
 	}
 
-	public void setXmlRenderTheme(XmlRenderTheme xmlRenderTheme) {
-		this.xmlRenderTheme = xmlRenderTheme;
+	public void setRenderTheme(RenderTheme renderTheme) {
+		this.renderTheme = renderTheme;
 	}
 
 	@Override
 	protected RendererJob createJob(Tile tile) {
-		return new RendererJob(tile, this.mapFile, this.xmlRenderTheme, this.textScale);
+		return new RendererJob(tile, this.mapFile, this.renderTheme, this.textScale);
 	}
 
 	@Override
