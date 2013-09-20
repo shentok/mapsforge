@@ -87,7 +87,7 @@ public final class MapViewer {
 
 	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) {
 		TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapViewPosition, GRAPHIC_FACTORY);
-		tileRendererLayer.setMapFile(new File("../../../Desktop/germany.map"));
+		tileRendererLayer.setMapFile(new File("/home/shentey/berlin.map"));
 		tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
 		return tileRendererLayer;
 	}
