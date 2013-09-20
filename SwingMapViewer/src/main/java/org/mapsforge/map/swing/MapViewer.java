@@ -87,7 +87,7 @@ public final class MapViewer {
 
 	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) {
 		TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapViewPosition, GRAPHIC_FACTORY);
-		tileRendererLayer.setMapFile(new File("/home/shentey/berlin.map"));
+		tileRendererLayer.setMapFile(new File("/windows/d/MoNav/Germany/rendering_mapsforge/map.map"));
 		tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
 		return tileRendererLayer;
 	}
