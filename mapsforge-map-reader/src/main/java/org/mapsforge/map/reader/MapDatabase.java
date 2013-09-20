@@ -27,7 +27,6 @@ import org.mapsforge.core.model.Tag;
 import org.mapsforge.core.model.Tile;
 import org.mapsforge.core.util.LatLongUtils;
 import org.mapsforge.core.util.MercatorProjection;
-import org.mapsforge.map.reader.header.FileOpenResult;
 import org.mapsforge.map.reader.header.MapFileHeader;
 import org.mapsforge.map.reader.header.MapFileInfo;
 import org.mapsforge.map.reader.header.SubFileParameter;
@@ -258,46 +257,25 @@ public class MapDatabase {
 	 * @param mapFile
 	 *            the map file.
 	 * @return a FileOpenResult containing an error message in case of a failure.
+	 * @throws IOException 
 	 * @throws IllegalArgumentException
 	 *             if the given map file is null.
 	 */
-	public FileOpenResult openFile(File mapFile) {
-		try {
-			if (mapFile == null) {
-				throw new IllegalArgumentException("mapFile must not be null");
-			}
-
-			// make sure to close any previously opened file first
-			closeFile();
-
-			// check if the file exists and is readable
-			if (!mapFile.exists()) {
-				return new FileOpenResult("file does not exist: " + mapFile);
-			} else if (!mapFile.isFile()) {
-				return new FileOpenResult("not a file: " + mapFile);
-			} else if (!mapFile.canRead()) {
-				return new FileOpenResult("cannot read file: " + mapFile);
-			}
-
-			// open the file in read only mode
-			this.inputFile = new RandomAccessFile(mapFile, READ_ONLY_MODE);
-			this.fileSize = this.inputFile.length();
-
-			this.readBuffer = new ReadBuffer(this.inputFile);
-			this.mapFileHeader = new MapFileHeader();
-			FileOpenResult fileOpenResult = this.mapFileHeader.readHeader(this.readBuffer, this.fileSize);
-			if (!fileOpenResult.isSuccess()) {
-				closeFile();
-				return fileOpenResult;
-			}
-
-			return FileOpenResult.SUCCESS;
-		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, null, e);
-			// make sure that the file is closed
-			closeFile();
-			return new FileOpenResult(e.getMessage());
+	public void openFile(File mapFile) throws IOException {
+		if (mapFile == null) {
+			throw new IllegalArgumentException("mapFile must not be null");
 		}
+
+		// make sure to close any previously opened file first
+		closeFile();
+
+		// open the file in read only mode
+		this.inputFile = new RandomAccessFile(mapFile, READ_ONLY_MODE);
+		this.fileSize = this.inputFile.length();
+
+		this.readBuffer = new ReadBuffer(this.inputFile);
+		this.mapFileHeader = new MapFileHeader();
+		this.mapFileHeader.readHeader(this.readBuffer, this.fileSize);
 	}
 
 	/**

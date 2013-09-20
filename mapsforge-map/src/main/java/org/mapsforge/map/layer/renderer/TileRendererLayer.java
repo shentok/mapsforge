@@ -15,6 +15,7 @@
 package org.mapsforge.map.layer.renderer;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.mapsforge.core.graphics.GraphicFactory;
 import org.mapsforge.core.model.Tile;
@@ -55,7 +56,7 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 		return this.renderTheme;
 	}
 
-	public void setMapFile(File mapFile) {
+	public void setMapFile(File mapFile) throws IOException {
 		this.mapFile = mapFile;
 		// TODO fix this
 		this.mapDatabase.openFile(mapFile);

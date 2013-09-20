@@ -14,6 +14,8 @@
  */
 package org.mapsforge.map.reader.header;
 
+import java.io.IOException;
+
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.core.util.LatLongUtils;
 import org.mapsforge.map.reader.ReadBuffer;
@@ -59,17 +61,6 @@ final class OptionalFields {
 	 */
 	private static final int START_ZOOM_LEVEL_MAX = 22;
 
-	static FileOpenResult readOptionalFields(ReadBuffer readBuffer, MapFileInfoBuilder mapFileInfoBuilder) {
-		OptionalFields optionalFields = new OptionalFields(readBuffer.readByte());
-		mapFileInfoBuilder.optionalFields = optionalFields;
-
-		FileOpenResult fileOpenResult = optionalFields.readOptionalFields(readBuffer);
-		if (!fileOpenResult.isSuccess()) {
-			return fileOpenResult;
-		}
-		return FileOpenResult.SUCCESS;
-	}
-
 	String comment;
 	String createdBy;
 	final boolean hasComment;
@@ -91,67 +82,55 @@ final class OptionalFields {
 		this.hasCreatedBy = (flags & HEADER_BITMASK_CREATED_BY) != 0;
 	}
 
-	private FileOpenResult readLanguagePreference(ReadBuffer readBuffer) {
-		if (this.hasLanguagePreference) {
-			String countryCode = readBuffer.readUTF8EncodedString();
-			if (countryCode.length() != LANGUAGE_PREFERENCE_LENGTH) {
-				return new FileOpenResult("invalid language preference: " + countryCode);
-			}
-			this.languagePreference = countryCode;
+	private static String readLanguagePreference(ReadBuffer readBuffer) throws IOException {
+		String countryCode = readBuffer.readUTF8EncodedString();
+		if (countryCode.length() != LANGUAGE_PREFERENCE_LENGTH) {
+			throw new IOException("invalid language preference: " + countryCode);
 		}
-		return FileOpenResult.SUCCESS;
+
+		return countryCode;
 	}
 
-	private FileOpenResult readMapStartPosition(ReadBuffer readBuffer) {
-		if (this.hasStartPosition) {
-			double mapStartLatitude = LatLongUtils.microdegreesToDegrees(readBuffer.readInt());
-			double mapStartLongitude = LatLongUtils.microdegreesToDegrees(readBuffer.readInt());
-			try {
-				this.startPosition = new LatLong(mapStartLatitude, mapStartLongitude);
-			} catch (IllegalArgumentException e) {
-				return new FileOpenResult(e.getMessage());
-			}
-		}
-		return FileOpenResult.SUCCESS;
+	private static LatLong readMapStartPosition(ReadBuffer readBuffer) {
+		double mapStartLatitude = LatLongUtils.microdegreesToDegrees(readBuffer.readInt());
+		double mapStartLongitude = LatLongUtils.microdegreesToDegrees(readBuffer.readInt());
+		return new LatLong(mapStartLatitude, mapStartLongitude);
 	}
 
-	private FileOpenResult readMapStartZoomLevel(ReadBuffer readBuffer) {
-		if (this.hasStartZoomLevel) {
-			// get and check the start zoom level (1 byte)
-			byte mapStartZoomLevel = readBuffer.readByte();
-			if (mapStartZoomLevel < 0 || mapStartZoomLevel > START_ZOOM_LEVEL_MAX) {
-				return new FileOpenResult("invalid map start zoom level: " + mapStartZoomLevel);
-			}
-
-			this.startZoomLevel = Byte.valueOf(mapStartZoomLevel);
+	private static byte readMapStartZoomLevel(ReadBuffer readBuffer) throws IOException {
+		// get and check the start zoom level (1 byte)
+		byte mapStartZoomLevel = readBuffer.readByte();
+		if (mapStartZoomLevel < 0 || mapStartZoomLevel > START_ZOOM_LEVEL_MAX) {
+			throw new IOException("invalid map start zoom level: " + mapStartZoomLevel);
 		}
-		return FileOpenResult.SUCCESS;
+
+		return Byte.valueOf(mapStartZoomLevel);
 	}
 
-	private FileOpenResult readOptionalFields(ReadBuffer readBuffer) {
-		FileOpenResult fileOpenResult = readMapStartPosition(readBuffer);
-		if (!fileOpenResult.isSuccess()) {
-			return fileOpenResult;
+
+	static OptionalFields readOptionalFields(ReadBuffer readBuffer) throws IOException {
+		OptionalFields optionalFields = new OptionalFields(readBuffer.readByte());
+
+		if (optionalFields.hasStartPosition) {
+			optionalFields.startPosition = readMapStartPosition(readBuffer);
 		}
 
-		fileOpenResult = readMapStartZoomLevel(readBuffer);
-		if (!fileOpenResult.isSuccess()) {
-			return fileOpenResult;
+		if (optionalFields.hasStartZoomLevel) {
+			optionalFields.startZoomLevel = readMapStartZoomLevel(readBuffer);
 		}
 
-		fileOpenResult = readLanguagePreference(readBuffer);
-		if (!fileOpenResult.isSuccess()) {
-			return fileOpenResult;
+		if (optionalFields.hasLanguagePreference) {
+			optionalFields.languagePreference = readLanguagePreference(readBuffer);
 		}
 
-		if (this.hasComment) {
-			this.comment = readBuffer.readUTF8EncodedString();
+		if (optionalFields.hasComment) {
+			optionalFields.comment = readBuffer.readUTF8EncodedString();
 		}
 
-		if (this.hasCreatedBy) {
-			this.createdBy = readBuffer.readUTF8EncodedString();
+		if (optionalFields.hasCreatedBy) {
+			optionalFields.createdBy = readBuffer.readUTF8EncodedString();
 		}
 
-		return FileOpenResult.SUCCESS;
+		return optionalFields;
 	}
 }

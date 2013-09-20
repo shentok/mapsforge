@@ -24,7 +24,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.mapsforge.core.graphics.GraphicFactory;
-import org.mapsforge.core.util.IOUtils;
 import org.mapsforge.map.rendertheme.XmlRenderTheme;
 import org.mapsforge.map.rendertheme.renderinstruction.Area;
 import org.mapsforge.map.rendertheme.renderinstruction.AreaBuilder;
@@ -65,14 +64,9 @@ public final class RenderThemeHandler extends DefaultHandler {
 				xmlRenderTheme.getRelativePathPrefix());
 		XMLReader xmlReader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		xmlReader.setContentHandler(renderThemeHandler);
-		InputStream inputStream = null;
-		try {
-			inputStream = xmlRenderTheme.getRenderThemeAsStream();
-			xmlReader.parse(new InputSource(inputStream));
-			return renderThemeHandler.renderTheme;
-		} finally {
-			IOUtils.closeQuietly(inputStream);
-		}
+		InputStream inputStream = xmlRenderTheme.getRenderThemeAsStream();
+		xmlReader.parse(new InputSource(inputStream));
+		return renderThemeHandler.renderTheme;
 	}
 
 	private Rule currentRule;
