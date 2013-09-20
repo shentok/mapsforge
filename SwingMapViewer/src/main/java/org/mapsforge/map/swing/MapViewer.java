@@ -25,9 +25,6 @@ import org.mapsforge.map.layer.cache.FileSystemTileCache;
 import org.mapsforge.map.layer.cache.InMemoryTileCache;
 import org.mapsforge.map.layer.cache.TileCache;
 import org.mapsforge.map.layer.cache.TwoLevelTileCache;
-import org.mapsforge.map.layer.download.TileDownloadLayer;
-import org.mapsforge.map.layer.download.tilesource.OpenStreetMapMapnik;
-import org.mapsforge.map.layer.download.tilesource.TileSource;
 import org.mapsforge.map.layer.renderer.TileRendererLayer;
 import org.mapsforge.map.model.MapViewPosition;
 import org.mapsforge.map.model.Model;
@@ -86,14 +83,6 @@ public final class MapViewer {
 		File cacheDirectory = new File(System.getProperty("java.io.tmpdir"), "mapsforge");
 		TileCache secondLevelTileCache = new FileSystemTileCache(1024, cacheDirectory, GRAPHIC_FACTORY);
 		return new TwoLevelTileCache(firstLevelTileCache, secondLevelTileCache);
-	}
-
-	private static Layer createTileDownloadLayer(TileCache tileCache, MapViewPosition mapViewPosition) {
-		TileSource tileSource = OpenStreetMapMapnik.INSTANCE;
-		TileDownloadLayer tileDownloadLayer = new TileDownloadLayer(tileCache, mapViewPosition, tileSource,
-				GRAPHIC_FACTORY);
-		tileDownloadLayer.start();
-		return tileDownloadLayer;
 	}
 
 	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) {
