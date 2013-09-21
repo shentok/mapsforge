@@ -14,6 +14,7 @@
  */
 package org.mapsforge.map.reader.header;
 
+import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.core.util.MercatorProjection;
 
 /**
@@ -100,7 +101,7 @@ public class SubFileParameter {
 	 */
 	private final int hashCodeValue;
 
-	SubFileParameter(SubFileParameterBuilder subFileParameterBuilder) {
+	SubFileParameter(SubFileParameterBuilder subFileParameterBuilder, BoundingBox boundingBox) {
 		this.startAddress = subFileParameterBuilder.startAddress;
 		this.indexStartAddress = subFileParameterBuilder.indexStartAddress;
 		this.subFileSize = subFileParameterBuilder.subFileSize;
@@ -110,14 +111,10 @@ public class SubFileParameter {
 		this.hashCodeValue = calculateHashCode();
 
 		// calculate the XY numbers of the boundary tiles in this sub-file
-		this.boundaryTileBottom = MercatorProjection.latitudeToTileY(subFileParameterBuilder.boundingBox.minLatitude,
-				this.baseZoomLevel);
-		this.boundaryTileLeft = MercatorProjection.longitudeToTileX(subFileParameterBuilder.boundingBox.minLongitude,
-				this.baseZoomLevel);
-		this.boundaryTileTop = MercatorProjection.latitudeToTileY(subFileParameterBuilder.boundingBox.maxLatitude,
-				this.baseZoomLevel);
-		this.boundaryTileRight = MercatorProjection.longitudeToTileX(subFileParameterBuilder.boundingBox.maxLongitude,
-				this.baseZoomLevel);
+		this.boundaryTileBottom = MercatorProjection.latitudeToTileY(boundingBox.minLatitude, this.baseZoomLevel);
+		this.boundaryTileLeft = MercatorProjection.longitudeToTileX(boundingBox.minLongitude, this.baseZoomLevel);
+		this.boundaryTileTop = MercatorProjection.latitudeToTileY(boundingBox.maxLatitude, this.baseZoomLevel);
+		this.boundaryTileRight = MercatorProjection.longitudeToTileX(boundingBox.maxLongitude, this.baseZoomLevel);
 
 		// calculate the horizontal and vertical amount of blocks in this sub-file
 		this.blocksWidth = this.boundaryTileRight - this.boundaryTileLeft + 1;

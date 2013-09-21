@@ -251,8 +251,7 @@ public class MapDatabase {
 		this.databaseIndexCache = new IndexCache(this.inputFile, INDEX_CACHE_SIZE);
 
 		this.readBuffer = new ReadBuffer(this.inputFile);
-		this.mapFileHeader = new MapFileHeader();
-		this.mapFileHeader.readHeader(this.readBuffer, this.fileSize);
+		this.mapFileHeader = MapFileHeader.readHeader(this.readBuffer, this.fileSize);
 	}
 
 	/**

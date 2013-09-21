@@ -57,13 +57,9 @@ final class RequiredFields {
 		return new BoundingBox(minLatitude, minLongitude, maxLatitude, maxLongitude);
 	}
 
-	static long readFileSize(ReadBuffer readBuffer, long fileSize) throws IOException {
+	static long readFileSize(ReadBuffer readBuffer) throws IOException {
 		// get and check the file size (8 bytes)
-		long headerFileSize = readBuffer.readLong();
-		if (headerFileSize != fileSize) {
-			throw new IOException("invalid file size: " + headerFileSize);
-		}
-		return fileSize;
+		return readBuffer.readLong();
 	}
 
 	static int readFileVersion(ReadBuffer readBuffer) throws IOException {

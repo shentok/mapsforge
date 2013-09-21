@@ -16,6 +16,7 @@ package org.mapsforge.map.reader.header;
 
 import java.io.IOException;
 
+import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.map.reader.ReadBuffer;
 
 /**
@@ -88,14 +89,17 @@ public class MapFileHeader {
 	 * @throws IOException
 	 *             if an error occurs while reading the file.
 	 */
-	public void readHeader(ReadBuffer readBuffer, long fileSize) throws IOException {
+	public static MapFileHeader readHeader(ReadBuffer readBuffer, long fileSize) throws IOException {
 		RequiredFields.readMagicByte(readBuffer);
 		RequiredFields.readRemainingHeader(readBuffer);
 
 		MapFileInfoBuilder mapFileInfoBuilder = new MapFileInfoBuilder();
 
 		mapFileInfoBuilder.fileVersion = RequiredFields.readFileVersion(readBuffer);
-		mapFileInfoBuilder.fileSize = RequiredFields.readFileSize(readBuffer, fileSize);
+		mapFileInfoBuilder.fileSize = RequiredFields.readFileSize(readBuffer);
+		if (mapFileInfoBuilder.fileSize != fileSize) {
+			throw new IOException("invalid file size: " + mapFileInfoBuilder.fileSize);
+		}
 		mapFileInfoBuilder.mapDate = RequiredFields.readMapDate(readBuffer);
 		mapFileInfoBuilder.boundingBox = RequiredFields.readBoundingBox(readBuffer);
 		mapFileInfoBuilder.tilePixelSize = RequiredFields.readTilePixelSize(readBuffer);
@@ -105,25 +109,36 @@ public class MapFileHeader {
 
 		mapFileInfoBuilder.poiTags = RequiredFields.readPoiTags(readBuffer);
 		mapFileInfoBuilder.wayTags = RequiredFields.readWayTags(readBuffer);
+		// get and check the number of sub-files (1 byte)
+		mapFileInfoBuilder.numberOfSubFiles = readBuffer.readByte();
+		if (mapFileInfoBuilder.numberOfSubFiles < 1) {
+			throw new IOException("invalid number of sub-files: " + mapFileInfoBuilder.numberOfSubFiles);
+		}
 
-		readSubFileParameters(readBuffer, fileSize, mapFileInfoBuilder);
+		MapFileHeader result = new MapFileHeader();
+		result.mapFileInfo = mapFileInfoBuilder.build();
+		result.subFileParameters = readSubFileParameters(readBuffer, fileSize, mapFileInfoBuilder.numberOfSubFiles, mapFileInfoBuilder.boundingBox, mapFileInfoBuilder.optionalFields.isDebugFile);
 
-		this.mapFileInfo = mapFileInfoBuilder.build();
+		result.zoomLevelMinimum = Byte.MAX_VALUE;
+		result.zoomLevelMaximum = Byte.MIN_VALUE;
+		for (SubFileParameter subFileParameter : result.subFileParameters) {
+			// update the global minimum and maximum zoom level information
+			if (result.zoomLevelMinimum > subFileParameter.zoomLevelMin) {
+				result.zoomLevelMinimum = subFileParameter.zoomLevelMin;
+			}
+			if (result.zoomLevelMaximum < subFileParameter.zoomLevelMax) {
+				result.zoomLevelMaximum = subFileParameter.zoomLevelMax;
+			}
+		}
+		
+		return result;
 	}
 
-	private void readSubFileParameters(ReadBuffer readBuffer, long fileSize,
-			MapFileInfoBuilder mapFileInfoBuilder) throws IOException {
-		// get and check the number of sub-files (1 byte)
-		byte numberOfSubFiles = readBuffer.readByte();
-		if (numberOfSubFiles < 1) {
-			throw new IOException("invalid number of sub-files: " + numberOfSubFiles);
-		}
-		mapFileInfoBuilder.numberOfSubFiles = numberOfSubFiles;
-
+	private static SubFileParameter[] readSubFileParameters(ReadBuffer readBuffer, long fileSize,
+			byte numberOfSubFiles, BoundingBox boundingBox, boolean isDebugFile) throws IOException {
 		SubFileParameter[] tempSubFileParameters = new SubFileParameter[numberOfSubFiles];
-		this.zoomLevelMinimum = Byte.MAX_VALUE;
-		this.zoomLevelMaximum = Byte.MIN_VALUE;
 
+		byte zoomLevelMaximum = Byte.MIN_VALUE;
 		// get and check the information for each sub-file
 		for (byte currentSubFile = 0; currentSubFile < numberOfSubFiles; ++currentSubFile) {
 			SubFileParameterBuilder subFileParameterBuilder = new SubFileParameterBuilder();
@@ -149,6 +164,11 @@ public class MapFileHeader {
 			}
 			subFileParameterBuilder.zoomLevelMax = zoomLevelMax;
 
+			// update the global minimum and maximum zoom level information
+			if (zoomLevelMaximum < zoomLevelMax) {
+				zoomLevelMaximum = zoomLevelMax;
+			}
+
 			// check for valid zoom level range
 			if (zoomLevelMin > zoomLevelMax) {
 				throw new IOException("invalid zoom level range: " + zoomLevelMin + SPACE + zoomLevelMax);
@@ -162,7 +182,7 @@ public class MapFileHeader {
 			subFileParameterBuilder.startAddress = startAddress;
 
 			long indexStartAddress = startAddress;
-			if (mapFileInfoBuilder.optionalFields.isDebugFile) {
+			if (isDebugFile) {
 				// the sub-file has an index signature before the index
 				indexStartAddress += SIGNATURE_LENGTH_INDEX;
 			}
@@ -175,31 +195,18 @@ public class MapFileHeader {
 			}
 			subFileParameterBuilder.subFileSize = subFileSize;
 
-			subFileParameterBuilder.boundingBox = mapFileInfoBuilder.boundingBox;
-
 			// add the current sub-file to the list of sub-files
-			tempSubFileParameters[currentSubFile] = subFileParameterBuilder.build();
-
-			updateZoomLevelInformation(tempSubFileParameters[currentSubFile]);
+			tempSubFileParameters[currentSubFile] = new SubFileParameter(subFileParameterBuilder, boundingBox);
 		}
 
 		// create and fill the lookup table for the sub-files
-		this.subFileParameters = new SubFileParameter[this.zoomLevelMaximum + 1];
-		for (int currentMapFile = 0; currentMapFile < numberOfSubFiles; ++currentMapFile) {
-			SubFileParameter subFileParameter = tempSubFileParameters[currentMapFile];
+		SubFileParameter[] result = new SubFileParameter[zoomLevelMaximum + 1];
+		for (SubFileParameter subFileParameter : tempSubFileParameters) {
 			for (byte zoomLevel = subFileParameter.zoomLevelMin; zoomLevel <= subFileParameter.zoomLevelMax; ++zoomLevel) {
-				this.subFileParameters[zoomLevel] = subFileParameter;
+				result[zoomLevel] = subFileParameter;
 			}
 		}
-	}
-
-	private void updateZoomLevelInformation(SubFileParameter subFileParameter) {
-		// update the global minimum and maximum zoom level information
-		if (this.zoomLevelMinimum > subFileParameter.zoomLevelMin) {
-			this.zoomLevelMinimum = subFileParameter.zoomLevelMin;
-		}
-		if (this.zoomLevelMaximum < subFileParameter.zoomLevelMax) {
-			this.zoomLevelMaximum = subFileParameter.zoomLevelMax;
-		}
+		
+		return result;
 	}
 }
