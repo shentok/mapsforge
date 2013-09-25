@@ -263,18 +263,16 @@ public class MapDatabase {
 	 */
 	public MapReadResult readMapData(Tile tile) {
 		try {
-			QueryParameters queryParameters = new QueryParameters();
-			queryParameters.queryZoomLevel = this.mapFileHeader.getQueryZoomLevel(tile.zoomLevel);
+			final byte queryZoomLevel = this.mapFileHeader.getQueryZoomLevel(tile.zoomLevel);
+			final SubFileParameter subFileParameter = this.mapFileHeader.getSubFileParameter(queryZoomLevel);
 
-			// get and check the sub-file for the query zoom level
-			SubFileParameter subFileParameter = this.mapFileHeader.getSubFileParameter(queryParameters.queryZoomLevel);
+			// check the sub-file for the query zoom level
 			if (subFileParameter == null) {
-				LOGGER.warning("no sub-file for zoom level: " + queryParameters.queryZoomLevel);
+				LOGGER.warning("no sub-file for zoom level: " + queryZoomLevel);
 				return null;
 			}
 
-			QueryCalculations.calculateBaseTiles(queryParameters, tile, subFileParameter);
-			QueryCalculations.calculateBlocks(queryParameters, subFileParameter);
+			final QueryParameters queryParameters = new QueryParameters(subFileParameter, tile, queryZoomLevel);
 
 			return processBlocks(queryParameters, subFileParameter);
 		} catch (IOException e) {
