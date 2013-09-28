@@ -67,7 +67,6 @@ public class DatabaseRenderer implements RenderCallback {
 	private final List<PointTextContainer> areaLabels;
 	private final CanvasRasterer canvasRasterer;
 	private Point[][] coordinates;
-	private RendererJob currentRendererJob;
 	private List<List<ShapePaintContainer>> drawingLayers;
 	private final GraphicFactory graphicFactory;
 	private final LabelPlacement labelPlacement;
@@ -78,7 +77,6 @@ public class DatabaseRenderer implements RenderCallback {
 	private RenderTheme previousJobTheme;
 	private float previousTextScale;
 	private byte previousZoomLevel;
-	private RenderTheme renderTheme;
 	private ShapeContainer shapeContainer;
 	private final List<WayTextContainer> wayNames;
 	private final List<List<List<ShapePaintContainer>>> ways;
@@ -112,42 +110,82 @@ public class DatabaseRenderer implements RenderCallback {
 	 *            the job that should be executed.
 	 */
 	public Bitmap executeJob(RendererJob rendererJob) {
-		this.currentRendererJob = rendererJob;
-
 		RenderTheme jobTheme = rendererJob.renderTheme;
 		if (!jobTheme.equals(this.previousJobTheme)) {
-			this.renderTheme = jobTheme;
-			if (this.renderTheme == null) {
-				this.previousJobTheme = null;
-				return null;
+			final int levels = jobTheme.getLevels();
+			this.ways.clear();
+
+			for (byte i = LAYERS - 1; i >= 0; --i) {
+				List<List<ShapePaintContainer>> innerWayList = new ArrayList<List<ShapePaintContainer>>(levels);
+				for (int j = levels - 1; j >= 0; --j) {
+					innerWayList.add(new ArrayList<ShapePaintContainer>(0));
+				}
+				this.ways.add(innerWayList);
 			}
-			createWayLists();
+
 			this.previousJobTheme = jobTheme;
 			this.previousZoomLevel = Byte.MIN_VALUE;
 		}
 
-		byte zoomLevel = rendererJob.tile.zoomLevel;
+		final byte zoomLevel = rendererJob.tile.zoomLevel;
 		if (zoomLevel != this.previousZoomLevel) {
-			setScaleStrokeWidth(zoomLevel);
+			final int zoomLevelDiff = Math.max(zoomLevel - STROKE_MIN_ZOOM_LEVEL, 0);
+			final float strokeWidth = (float) Math.pow(STROKE_INCREASE, zoomLevelDiff);
+			jobTheme.scaleStrokeWidth(strokeWidth);
 			this.previousZoomLevel = zoomLevel;
 		}
 
-		float textScale = rendererJob.textScale;
+		final float textScale = rendererJob.textScale;
 		if (Float.compare(textScale, this.previousTextScale) != 0) {
-			this.renderTheme.scaleTextSize(textScale);
+			jobTheme.scaleTextSize(textScale);
 			this.previousTextScale = textScale;
 		}
 
 		if (this.mapDatabase != null) {
 			MapReadResult mapReadResult = this.mapDatabase.readMapData(rendererJob.tile);
-			processReadMapData(mapReadResult);
+			if (mapReadResult != null) {
+				for (PointOfInterest pointOfInterest : mapReadResult.pointOfInterests) {
+					this.drawingLayers = this.ways.get(getValidLayer(pointOfInterest.layer));
+					this.poiPosition = scaleLatLong(pointOfInterest.position, rendererJob.tile);
+					jobTheme.matchNode(this, pointOfInterest.tags, rendererJob.tile.zoomLevel);
+				}
+	
+				for (Way way : mapReadResult.ways) {
+					this.drawingLayers = this.ways.get(getValidLayer(way.layer));
+					// TODO what about the label position?
+	
+					LatLong[][] latLongs = way.latLongs;
+					this.coordinates = new Point[latLongs.length][];
+					for (int i = 0; i < this.coordinates.length; ++i) {
+						this.coordinates[i] = new Point[latLongs[i].length];
+	
+						for (int j = 0; j < this.coordinates[i].length; ++j) {
+							this.coordinates[i][j] = scaleLatLong(latLongs[i][j], rendererJob.tile);
+						}
+					}
+					this.shapeContainer = new PolylineContainer(this.coordinates);
+	
+					if (GeometryUtils.isClosedWay(this.coordinates[0])) {
+						jobTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
+					} else {
+						jobTheme.matchLinearWay(this, way.tags, rendererJob.tile.zoomLevel);
+					}
+				}
+	
+				if (mapReadResult.isWater) {
+					this.drawingLayers = this.ways.get(0);
+					this.coordinates = WATER_TILE_COORDINATES;
+					this.shapeContainer = new PolylineContainer(this.coordinates);
+					jobTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), rendererJob.tile.zoomLevel);
+				}
+			}
 		}
 
 		this.nodes = this.labelPlacement.placeLabels(this.nodes, this.pointSymbols, this.areaLabels, rendererJob.tile);
 
 		Bitmap bitmap = this.graphicFactory.createBitmap(Tile.TILE_SIZE, Tile.TILE_SIZE);
 		this.canvasRasterer.setCanvasBitmap(bitmap);
-		this.canvasRasterer.fill(this.renderTheme.getMapBackground());
+		this.canvasRasterer.fill(jobTheme.getMapBackground());
 		this.canvasRasterer.drawWays(this.ways);
 		this.canvasRasterer.drawSymbols(this.waySymbols);
 		this.canvasRasterer.drawSymbols(this.pointSymbols);
@@ -273,72 +311,6 @@ public class DatabaseRenderer implements RenderCallback {
 		this.waySymbols.clear();
 	}
 
-	private void createWayLists() {
-		int levels = this.renderTheme.getLevels();
-		this.ways.clear();
-
-		for (byte i = LAYERS - 1; i >= 0; --i) {
-			List<List<ShapePaintContainer>> innerWayList = new ArrayList<List<ShapePaintContainer>>(levels);
-			for (int j = levels - 1; j >= 0; --j) {
-				innerWayList.add(new ArrayList<ShapePaintContainer>(0));
-			}
-			this.ways.add(innerWayList);
-		}
-	}
-
-	private void processReadMapData(MapReadResult mapReadResult) {
-		if (mapReadResult == null) {
-			return;
-		}
-
-		for (PointOfInterest pointOfInterest : mapReadResult.pointOfInterests) {
-			renderPointOfInterest(pointOfInterest);
-		}
-
-		for (Way way : mapReadResult.ways) {
-			renderWay(way);
-		}
-
-		if (mapReadResult.isWater) {
-			renderWaterBackground();
-		}
-	}
-
-	private void renderPointOfInterest(PointOfInterest pointOfInterest) {
-		this.drawingLayers = this.ways.get(getValidLayer(pointOfInterest.layer));
-		this.poiPosition = scaleLatLong(pointOfInterest.position);
-		this.renderTheme.matchNode(this, pointOfInterest.tags, this.currentRendererJob.tile.zoomLevel);
-	}
-
-	private void renderWaterBackground() {
-		this.drawingLayers = this.ways.get(0);
-		this.coordinates = WATER_TILE_COORDINATES;
-		this.shapeContainer = new PolylineContainer(this.coordinates);
-		this.renderTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), this.currentRendererJob.tile.zoomLevel);
-	}
-
-	private void renderWay(Way way) {
-		this.drawingLayers = this.ways.get(getValidLayer(way.layer));
-		// TODO what about the label position?
-
-		LatLong[][] latLongs = way.latLongs;
-		this.coordinates = new Point[latLongs.length][];
-		for (int i = 0; i < this.coordinates.length; ++i) {
-			this.coordinates[i] = new Point[latLongs[i].length];
-
-			for (int j = 0; j < this.coordinates[i].length; ++j) {
-				this.coordinates[i][j] = scaleLatLong(latLongs[i][j]);
-			}
-		}
-		this.shapeContainer = new PolylineContainer(this.coordinates);
-
-		if (GeometryUtils.isClosedWay(this.coordinates[0])) {
-			this.renderTheme.matchClosedWay(this, way.tags, this.currentRendererJob.tile.zoomLevel);
-		} else {
-			this.renderTheme.matchLinearWay(this, way.tags, this.currentRendererJob.tile.zoomLevel);
-		}
-	}
-
 	/**
 	 * Converts the given LatLong into XY coordinates on the current object.
 	 * 
@@ -346,23 +318,12 @@ public class DatabaseRenderer implements RenderCallback {
 	 *            the LatLong to convert.
 	 * @return the XY coordinates on the current object.
 	 */
-	private Point scaleLatLong(LatLong latLong) {
-		double pixelX = MercatorProjection.longitudeToPixelX(latLong.longitude, this.currentRendererJob.tile.zoomLevel)
-				- MercatorProjection.tileToPixel(this.currentRendererJob.tile.tileX);
-		double pixelY = MercatorProjection.latitudeToPixelY(latLong.latitude, this.currentRendererJob.tile.zoomLevel)
-				- MercatorProjection.tileToPixel(this.currentRendererJob.tile.tileY);
+	private static Point scaleLatLong(LatLong latLong, Tile tile) {
+		double pixelX = MercatorProjection.longitudeToPixelX(latLong.longitude, tile.zoomLevel)
+				- MercatorProjection.tileToPixel(tile.tileX);
+		double pixelY = MercatorProjection.latitudeToPixelY(latLong.latitude, tile.zoomLevel)
+				- MercatorProjection.tileToPixel(tile.tileY);
 
 		return new Point((float) pixelX, (float) pixelY);
-	}
-
-	/**
-	 * Sets the scale stroke factor for the given zoom level.
-	 * 
-	 * @param zoomLevel
-	 *            the zoom level for which the scale stroke factor should be set.
-	 */
-	private void setScaleStrokeWidth(byte zoomLevel) {
-		int zoomLevelDiff = Math.max(zoomLevel - STROKE_MIN_ZOOM_LEVEL, 0);
-		this.renderTheme.scaleStrokeWidth((float) Math.pow(STROKE_INCREASE, zoomLevelDiff));
 	}
 }
