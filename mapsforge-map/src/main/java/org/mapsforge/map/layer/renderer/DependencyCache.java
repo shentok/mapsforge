@@ -196,14 +196,13 @@ class DependencyCache {
 	 * This method must be called, before the dependencies will be handled correctly. Because it sets the actual Tile
 	 * and looks if it has already dependencies.
 	 */
-	void generateTileAndDependencyOnTile(Tile tile) {
+	void setCurrentTile(Tile tile) {
 		this.currentTile = new Tile(tile.tileX, tile.tileY, tile.zoomLevel);
-		this.currentDependencyOnTile = this.dependencyTable.get(this.currentTile);
 
-		if (this.currentDependencyOnTile == null) {
+		if (this.dependencyTable.get(this.currentTile) == null) {
 			this.dependencyTable.put(this.currentTile, new DependencyOnTile());
-			this.currentDependencyOnTile = this.dependencyTable.get(this.currentTile);
 		}
+		this.currentDependencyOnTile = this.dependencyTable.get(this.currentTile);
 	}
 
 	/**

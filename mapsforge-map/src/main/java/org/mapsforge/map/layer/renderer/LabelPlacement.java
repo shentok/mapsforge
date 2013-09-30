@@ -163,7 +163,7 @@ class LabelPlacement {
 	List<PointTextContainer> placeLabels(List<PointTextContainer> labels, List<SymbolContainer> symbols,
 			List<PointTextContainer> areaLabels, Tile cT) {
 		List<PointTextContainer> returnLabels = labels;
-		this.dependencyCache.generateTileAndDependencyOnTile(cT);
+		this.dependencyCache.setCurrentTile(cT);
 
 		preprocessAreaLabels(areaLabels);
 		if (!areaLabels.isEmpty()) {
