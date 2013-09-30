@@ -165,7 +165,7 @@ public class DatabaseRenderer implements RenderCallback {
 					}
 					this.shapeContainer = new PolylineContainer(this.coordinates);
 	
-					if (GeometryUtils.isClosedWay(this.coordinates[0])) {
+					if (DatabaseRenderer.isClosedWay(this.coordinates[0])) {
 						jobTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
 					} else {
 						jobTheme.matchLinearWay(this, way.tags, rendererJob.tile.zoomLevel);
@@ -243,13 +243,13 @@ public class DatabaseRenderer implements RenderCallback {
 
 	@Override
 	public void renderAreaCaption(String caption, float verticalOffset, Paint fill, Paint stroke) {
-		Point centerPosition = GeometryUtils.calculateCenterOfBoundingBox(this.coordinates[0]);
+		Point centerPosition = DatabaseRenderer.calculateCenterOfBoundingBox(this.coordinates[0]);
 		this.areaLabels.add(new PointTextContainer(caption, centerPosition.x, centerPosition.y, fill, stroke));
 	}
 
 	@Override
 	public void renderAreaSymbol(Bitmap symbol) {
-		Point centerPosition = GeometryUtils.calculateCenterOfBoundingBox(this.coordinates[0]);
+		Point centerPosition = DatabaseRenderer.calculateCenterOfBoundingBox(this.coordinates[0]);
 		int halfSymbolWidth = symbol.getWidth() / 2;
 		int halfSymbolHeight = symbol.getHeight() / 2;
 		double pointX = centerPosition.x - halfSymbolWidth;
@@ -309,6 +309,46 @@ public class DatabaseRenderer implements RenderCallback {
 		this.pointSymbols.clear();
 		this.wayNames.clear();
 		this.waySymbols.clear();
+	}
+
+	/**
+	 * @param way
+	 *            the coordinates of the way.
+	 * @return true if the given way is closed, false otherwise.
+	 */
+	private static boolean isClosedWay(Point[] way) {
+		return way[0].equals(way[way.length - 1]);
+	}
+
+	/**
+	 * Calculates the center of the minimum bounding rectangle for the given coordinates.
+	 * 
+	 * @param coordinates
+	 *            the coordinates for which calculation should be done.
+	 * @return the center coordinates of the minimum bounding rectangle.
+	 */
+	private static Point calculateCenterOfBoundingBox(Point[] coordinates) {
+		double pointXMin = coordinates[0].x;
+		double pointXMax = coordinates[0].x;
+		double pointYMin = coordinates[0].y;
+		double pointYMax = coordinates[0].y;
+	
+		for (int i = 1; i < coordinates.length; ++i) {
+			Point immutablePoint = coordinates[i];
+			if (immutablePoint.x < pointXMin) {
+				pointXMin = immutablePoint.x;
+			} else if (immutablePoint.x > pointXMax) {
+				pointXMax = immutablePoint.x;
+			}
+	
+			if (immutablePoint.y < pointYMin) {
+				pointYMin = immutablePoint.y;
+			} else if (immutablePoint.y > pointYMax) {
+				pointYMax = immutablePoint.y;
+			}
+		}
+	
+		return new Point((pointXMin + pointXMax) / 2, (pointYMax + pointYMin) / 2);
 	}
 
 	/**
