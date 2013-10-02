@@ -30,7 +30,6 @@ import org.mapsforge.map.reader.MapDatabase;
 import org.mapsforge.map.reader.MapReadResult;
 import org.mapsforge.map.reader.PointOfInterest;
 import org.mapsforge.map.reader.Way;
-import org.mapsforge.map.reader.header.MapFileInfo;
 import org.mapsforge.map.rendertheme.RenderCallback;
 import org.mapsforge.map.rendertheme.rule.RenderTheme;
 
@@ -38,13 +37,11 @@ import org.mapsforge.map.rendertheme.rule.RenderTheme;
  * A DatabaseRenderer renders map tiles by reading from a {@link MapDatabase}.
  */
 public class DatabaseRenderer implements RenderCallback {
-	private static final Byte DEFAULT_START_ZOOM_LEVEL = Byte.valueOf((byte) 12);
 	private static final byte LAYERS = 11;
 	private static final double STROKE_INCREASE = 1.5;
 	private static final byte STROKE_MIN_ZOOM_LEVEL = 12;
 	private static final Tag TAG_NATURAL_WATER = new Tag("natural", "water");
 	private static final Point[][] WATER_TILE_COORDINATES = getTilePixelCoordinates();
-	private static final byte ZOOM_MAX = 22;
 
 	private static Point[][] getTilePixelCoordinates() {
 		Point point1 = new Point(0, 0);
@@ -208,42 +205,6 @@ public class DatabaseRenderer implements RenderCallback {
 		clearLists();
 
 		return bitmap;
-	}
-
-	/**
-	 * @return the start point (may be null).
-	 */
-	public LatLong getStartPoint() {
-		if (this.mapDatabase != null && this.mapDatabase.hasOpenFile()) {
-			MapFileInfo mapFileInfo = this.mapDatabase.getMapFileInfo();
-			if (mapFileInfo.startPosition != null) {
-				return mapFileInfo.startPosition;
-			}
-			return mapFileInfo.boundingBox.getCenterPoint();
-		}
-
-		return null;
-	}
-
-	/**
-	 * @return the start zoom level (may be null).
-	 */
-	public Byte getStartZoomLevel() {
-		if (this.mapDatabase != null && this.mapDatabase.hasOpenFile()) {
-			MapFileInfo mapFileInfo = this.mapDatabase.getMapFileInfo();
-			if (mapFileInfo.startZoomLevel != null) {
-				return mapFileInfo.startZoomLevel;
-			}
-		}
-
-		return DEFAULT_START_ZOOM_LEVEL;
-	}
-
-	/**
-	 * @return the maximum zoom level.
-	 */
-	public byte getZoomLevelMax() {
-		return ZOOM_MAX;
 	}
 
 	@Override
