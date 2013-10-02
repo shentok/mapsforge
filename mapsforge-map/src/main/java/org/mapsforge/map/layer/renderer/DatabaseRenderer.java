@@ -155,43 +155,41 @@ public class DatabaseRenderer implements RenderCallback {
 			this.previousTextScale = textScale;
 		}
 
-		if (this.mapDatabase != null) {
-			MapReadResult mapReadResult = this.mapDatabase.readMapData(rendererJob.tile);
-			if (mapReadResult != null) {
-				for (PointOfInterest pointOfInterest : mapReadResult.pointOfInterests) {
-					this.drawingLayers = this.ways.get(getValidLayer(pointOfInterest.layer));
-					this.poiPosition = scaleLatLong(pointOfInterest.position, rendererJob.tile);
-					jobTheme.matchNode(this, pointOfInterest.tags, rendererJob.tile.zoomLevel);
-				}
-	
-				for (Way way : mapReadResult.ways) {
-					this.drawingLayers = this.ways.get(getValidLayer(way.layer));
-					// TODO what about the label position?
-	
-					LatLong[][] latLongs = way.latLongs;
-					this.coordinates = new Point[latLongs.length][];
-					for (int i = 0; i < this.coordinates.length; ++i) {
-						this.coordinates[i] = new Point[latLongs[i].length];
-	
-						for (int j = 0; j < this.coordinates[i].length; ++j) {
-							this.coordinates[i][j] = scaleLatLong(latLongs[i][j], rendererJob.tile);
-						}
-					}
-					this.shapeContainer = new PolylineContainer(this.coordinates);
-	
-					if (DatabaseRenderer.isClosedWay(this.coordinates[0])) {
-						jobTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
-					} else {
-						jobTheme.matchLinearWay(this, way.tags, rendererJob.tile.zoomLevel);
+		final MapReadResult mapReadResult = this.mapDatabase.readMapData(rendererJob.tile);
+		if (mapReadResult != null) {
+			for (PointOfInterest pointOfInterest : mapReadResult.pointOfInterests) {
+				this.drawingLayers = this.ways.get(getValidLayer(pointOfInterest.layer));
+				this.poiPosition = scaleLatLong(pointOfInterest.position, rendererJob.tile);
+				jobTheme.matchNode(this, pointOfInterest.tags, rendererJob.tile.zoomLevel);
+			}
+
+			for (Way way : mapReadResult.ways) {
+				this.drawingLayers = this.ways.get(getValidLayer(way.layer));
+				// TODO what about the label position?
+
+				LatLong[][] latLongs = way.latLongs;
+				this.coordinates = new Point[latLongs.length][];
+				for (int i = 0; i < this.coordinates.length; ++i) {
+					this.coordinates[i] = new Point[latLongs[i].length];
+
+					for (int j = 0; j < this.coordinates[i].length; ++j) {
+						this.coordinates[i][j] = scaleLatLong(latLongs[i][j], rendererJob.tile);
 					}
 				}
-	
-				if (mapReadResult.isWater) {
-					this.drawingLayers = this.ways.get(0);
-					this.coordinates = WATER_TILE_COORDINATES;
-					this.shapeContainer = new PolylineContainer(this.coordinates);
-					jobTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), rendererJob.tile.zoomLevel);
+				this.shapeContainer = new PolylineContainer(this.coordinates);
+
+				if (DatabaseRenderer.isClosedWay(this.coordinates[0])) {
+					jobTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
+				} else {
+					jobTheme.matchLinearWay(this, way.tags, rendererJob.tile.zoomLevel);
 				}
+			}
+
+			if (mapReadResult.isWater) {
+				this.drawingLayers = this.ways.get(0);
+				this.coordinates = WATER_TILE_COORDINATES;
+				this.shapeContainer = new PolylineContainer(this.coordinates);
+				jobTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), rendererJob.tile.zoomLevel);
 			}
 		}
 
