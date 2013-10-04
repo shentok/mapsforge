@@ -85,12 +85,12 @@ public class DatabaseRenderer implements RenderCallback {
 	private List<PointTextContainer> nodes;
 	private final List<SymbolContainer> pointSymbols;
 	private Point poiPosition;
-	private RenderTheme previousJobTheme;
 	private float previousTextScale;
 	private byte previousZoomLevel;
 	private final List<WayTextContainer> wayNames;
 	private final List<List<List<ShapePaintContainer>>> ways;
 	private final List<SymbolContainer> waySymbols;
+	private final RenderTheme renderTheme;
 
 	/**
 	 * Constructs a new DatabaseRenderer.
@@ -98,8 +98,13 @@ public class DatabaseRenderer implements RenderCallback {
 	 * @param mapDatabase
 	 *            the MapDatabase from which the map data will be read.
 	 */
-	public DatabaseRenderer(MapDatabase mapDatabase, GraphicFactory graphicFactory) {
+	public DatabaseRenderer(MapDatabase mapDatabase, RenderTheme renderTheme, GraphicFactory graphicFactory) {
+		if (renderTheme == null) {
+			throw new IllegalArgumentException("renderTheme must not be null");
+		} 
+
 		this.mapDatabase = mapDatabase;
+		this.renderTheme = renderTheme;
 		this.graphicFactory = graphicFactory;
 
 		this.canvasRasterer = new CanvasRasterer(graphicFactory);
@@ -111,6 +116,19 @@ public class DatabaseRenderer implements RenderCallback {
 		this.areaLabels = new ArrayList<PointTextContainer>(64);
 		this.waySymbols = new ArrayList<SymbolContainer>(64);
 		this.pointSymbols = new ArrayList<SymbolContainer>(64);
+		this.previousZoomLevel = Byte.MIN_VALUE;
+
+		{
+			final int levels = this.renderTheme.getLevels();
+	
+			for (byte i = LAYERS - 1; i >= 0; --i) {
+				List<List<ShapePaintContainer>> innerWayList = new ArrayList<List<ShapePaintContainer>>(levels);
+				for (int j = levels - 1; j >= 0; --j) {
+					innerWayList.add(new ArrayList<ShapePaintContainer>(0));
+				}
+				this.ways.add(innerWayList);
+			}
+		}
 	}
 
 	/**
@@ -120,34 +138,17 @@ public class DatabaseRenderer implements RenderCallback {
 	 *            the job that should be executed.
 	 */
 	public Bitmap executeJob(RendererJob rendererJob) {
-		RenderTheme jobTheme = rendererJob.renderTheme;
-		if (!jobTheme.equals(this.previousJobTheme)) {
-			final int levels = jobTheme.getLevels();
-			this.ways.clear();
-
-			for (byte i = LAYERS - 1; i >= 0; --i) {
-				List<List<ShapePaintContainer>> innerWayList = new ArrayList<List<ShapePaintContainer>>(levels);
-				for (int j = levels - 1; j >= 0; --j) {
-					innerWayList.add(new ArrayList<ShapePaintContainer>(0));
-				}
-				this.ways.add(innerWayList);
-			}
-
-			this.previousJobTheme = jobTheme;
-			this.previousZoomLevel = Byte.MIN_VALUE;
-		}
-
 		final byte zoomLevel = rendererJob.tile.zoomLevel;
 		if (zoomLevel != this.previousZoomLevel) {
 			final int zoomLevelDiff = Math.max(zoomLevel - STROKE_MIN_ZOOM_LEVEL, 0);
 			final float strokeWidth = (float) Math.pow(STROKE_INCREASE, zoomLevelDiff);
-			jobTheme.scaleStrokeWidth(strokeWidth);
+			renderTheme.scaleStrokeWidth(strokeWidth);
 			this.previousZoomLevel = zoomLevel;
 		}
 
 		final float textScale = rendererJob.textScale;
 		if (Float.compare(textScale, this.previousTextScale) != 0) {
-			jobTheme.scaleTextSize(textScale);
+			renderTheme.scaleTextSize(textScale);
 			this.previousTextScale = textScale;
 		}
 
@@ -156,7 +157,7 @@ public class DatabaseRenderer implements RenderCallback {
 			for (PointOfInterest pointOfInterest : mapReadResult.pointOfInterests) {
 				this.drawingLayers = this.ways.get(getValidLayer(pointOfInterest.layer));
 				this.poiPosition = scaleLatLong(pointOfInterest.position, rendererJob.tile);
-				jobTheme.matchNode(this, pointOfInterest.tags, rendererJob.tile.zoomLevel);
+				renderTheme.matchNode(this, pointOfInterest.tags, rendererJob.tile.zoomLevel);
 			}
 
 			for (Way way : mapReadResult.ways) {
@@ -174,16 +175,16 @@ public class DatabaseRenderer implements RenderCallback {
 				}
 
 				if (DatabaseRenderer.isClosedWay(this.coordinates[0])) {
-					jobTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
+					renderTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
 				} else {
-					jobTheme.matchLinearWay(this, way.tags, rendererJob.tile.zoomLevel);
+					renderTheme.matchLinearWay(this, way.tags, rendererJob.tile.zoomLevel);
 				}
 			}
 
 			if (mapReadResult.isWater) {
 				this.drawingLayers = this.ways.get(0);
 				this.coordinates = WATER_TILE_COORDINATES;
-				jobTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), rendererJob.tile.zoomLevel);
+				renderTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), rendererJob.tile.zoomLevel);
 			}
 		}
 
@@ -191,7 +192,7 @@ public class DatabaseRenderer implements RenderCallback {
 
 		Bitmap bitmap = this.graphicFactory.createBitmap(Tile.TILE_SIZE, Tile.TILE_SIZE);
 		this.canvasRasterer.setCanvasBitmap(bitmap);
-		this.canvasRasterer.fill(jobTheme.getMapBackground());
+		this.canvasRasterer.fill(renderTheme.getMapBackground());
 		this.canvasRasterer.drawWays(this.ways);
 		this.canvasRasterer.drawSymbols(this.waySymbols);
 		this.canvasRasterer.drawSymbols(this.pointSymbols);

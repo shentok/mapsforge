@@ -18,27 +18,22 @@ import java.io.File;
 
 import org.mapsforge.core.model.Tile;
 import org.mapsforge.map.layer.queue.Job;
-import org.mapsforge.map.rendertheme.rule.RenderTheme;
 
 public class RendererJob extends Job {
 	public final File mapFile;
 	public final float textScale;
-	public final RenderTheme renderTheme;
 	private final int hashCodeValue;
 
-	public RendererJob(Tile tile, File mapFile, RenderTheme renderTheme, float textScale) {
+	public RendererJob(Tile tile, File mapFile, float textScale) {
 		super(tile);
 
 		if (mapFile == null) {
 			throw new IllegalArgumentException("mapFile must not be null");
-		} else if (renderTheme == null) {
-			throw new IllegalArgumentException("xmlRenderTheme must not be null");
 		} else if (textScale <= 0 || Float.isNaN(textScale)) {
 			throw new IllegalArgumentException("invalid textScale: " + textScale);
 		}
 
 		this.mapFile = mapFile;
-		this.renderTheme = renderTheme;
 		this.textScale = textScale;
 
 		this.hashCodeValue = calculateHashCode();
@@ -58,8 +53,6 @@ public class RendererJob extends Job {
 			return false;
 		} else if (Float.floatToIntBits(this.textScale) != Float.floatToIntBits(other.textScale)) {
 			return false;
-		} else if (!this.renderTheme.equals(other.renderTheme)) {
-			return false;
 		}
 		return true;
 	}
@@ -74,7 +67,6 @@ public class RendererJob extends Job {
 		int result = super.hashCode();
 		result = prime * result + this.mapFile.hashCode();
 		result = prime * result + Float.floatToIntBits(this.textScale);
-		result = prime * result + this.renderTheme.hashCode();
 		return result;
 	}
 }

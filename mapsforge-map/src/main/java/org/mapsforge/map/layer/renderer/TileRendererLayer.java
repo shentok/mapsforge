@@ -31,11 +31,12 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 	private MapWorker mapWorker;
 	private final GraphicFactory graphicFactory;
 	private float textScale;
-	private RenderTheme renderTheme;
+	private final RenderTheme renderTheme;
 
-	public TileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition, GraphicFactory graphicFactory) {
+	public TileRendererLayer(RenderTheme renderTheme, TileCache tileCache, MapViewPosition mapViewPosition, GraphicFactory graphicFactory) {
 		super(tileCache, mapViewPosition, graphicFactory);
 
+		this.renderTheme = renderTheme;
 		this.graphicFactory = graphicFactory;
 		this.textScale = 1;
 	}
@@ -57,7 +58,7 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 		// TODO fix this
 		this.mapDatabase = new MapDatabase(mapFile);
 
-		DatabaseRenderer databaseRenderer = new DatabaseRenderer(this.mapDatabase, graphicFactory);
+		DatabaseRenderer databaseRenderer = new DatabaseRenderer(this.mapDatabase, this.renderTheme, graphicFactory);
 
 		this.mapWorker = new MapWorker(tileCache, this.jobQueue, databaseRenderer, this);
 		this.mapWorker.start();
@@ -67,13 +68,9 @@ public class TileRendererLayer extends TileLayer<RendererJob> {
 		this.textScale = textScale;
 	}
 
-	public void setRenderTheme(RenderTheme renderTheme) {
-		this.renderTheme = renderTheme;
-	}
-
 	@Override
 	protected RendererJob createJob(Tile tile) {
-		return new RendererJob(tile, this.mapFile, this.renderTheme, this.textScale);
+		return new RendererJob(tile, this.mapFile, this.textScale);
 	}
 
 	@Override
