@@ -140,11 +140,6 @@ class LabelPlacement {
 	private static final int START_DISTANCE_TO_SYMBOLS = 4;
 	private static final int SYMBOL_DISTANCE_TO_SYMBOL = 2;
 
-	final DependencyCache dependencyCache = new DependencyCache();
-
-	LabelPlacement() {
-	}
-
 	/**
 	 * The inputs are all the label and symbol objects of the current object. The output is overlap free label and
 	 * symbol placement with the greedy strategy. The placement model is either the two fixed point or the four fixed
@@ -160,32 +155,31 @@ class LabelPlacement {
 	 *            current object with the x,y- coordinates and the zoom level.
 	 * @return the processed list of labels.
 	 */
-	List<PointTextContainer> placeLabels(List<PointTextContainer> labels, List<SymbolContainer> symbols,
-			List<PointTextContainer> areaLabels, Tile cT) {
+	static List<PointTextContainer> placeLabels(List<PointTextContainer> labels, List<SymbolContainer> symbols,
+			List<PointTextContainer> areaLabels, DependencyCache dependencyCache) {
 		List<PointTextContainer> returnLabels = labels;
-		this.dependencyCache.setCurrentTile(cT);
 
 		preprocessAreaLabels(areaLabels);
 		if (!areaLabels.isEmpty()) {
-			this.dependencyCache.removeAreaLabelsInAlreadyDrawnAreas(areaLabels);
+			dependencyCache.removeAreaLabelsInAlreadyDrawnAreas(areaLabels);
 		}
 
 		preprocessLabels(returnLabels);
 
 		preprocessSymbols(symbols);
-		this.dependencyCache.removeSymbolsFromDrawnAreas(symbols);
+		dependencyCache.removeSymbolsFromDrawnAreas(symbols);
 
 		removeEmptySymbolReferences(returnLabels, symbols);
 
 		removeOverlappingSymbolsWithAreaLabels(symbols, areaLabels);
 
-		this.dependencyCache.removeOverlappingObjectsWithDependencyOnTile(returnLabels, areaLabels, symbols);
+		dependencyCache.removeOverlappingObjectsWithDependencyOnTile(returnLabels, areaLabels, symbols);
 
 		if (!returnLabels.isEmpty()) {
-			returnLabels = processFourPointGreedy(returnLabels, symbols, areaLabels);
+			returnLabels = processFourPointGreedy(returnLabels, symbols, areaLabels, dependencyCache);
 		}
 
-		this.dependencyCache.fillDependencyOnTile(returnLabels, symbols, areaLabels);
+		dependencyCache.fillDependencyOnTile(returnLabels, symbols, areaLabels);
 
 		return returnLabels;
 	}
@@ -233,10 +227,11 @@ class LabelPlacement {
 	 *            symbol positions
 	 * @param areaLabels
 	 *            area label positions and text
+	 * @param dependencyCache 
 	 * @return list of labels without overlaps with symbols and other labels by the four fixed position greedy strategy
 	 */
-	private List<PointTextContainer> processFourPointGreedy(List<PointTextContainer> labels,
-			List<SymbolContainer> symbols, List<PointTextContainer> areaLabels) {
+	private static List<PointTextContainer> processFourPointGreedy(List<PointTextContainer> labels,
+			List<SymbolContainer> symbols, List<PointTextContainer> areaLabels, DependencyCache dependencyCache) {
 		// Array for the generated reference positions around the points of interests
 		ReferencePosition[] refPos = new ReferencePosition[(labels.size()) * 4];
 
@@ -273,7 +268,7 @@ class LabelPlacement {
 
 		removeNonValidateReferencePositionSymbols(refPos, symbols);
 		removeNonValidateReferencePositionAreaLabels(refPos, areaLabels);
-		this.dependencyCache.removeReferencePointsFromDependencyCache(refPos);
+		dependencyCache.removeReferencePointsFromDependencyCache(refPos);
 
 		// lists that sorts the reference points after the minimum top edge y position
 		PriorityQueue<ReferencePosition> priorUp = new PriorityQueue<ReferencePosition>(labels.size() * 4 * 2

@@ -80,7 +80,7 @@ public class DatabaseRenderer implements RenderCallback {
 	private Point[][] coordinates;
 	private List<List<ShapePaintContainer>> drawingLayers;
 	private final GraphicFactory graphicFactory;
-	private final LabelPlacement labelPlacement;
+	private final DependencyCache dependencyCache;
 	private final MapDatabase mapDatabase;
 	private List<PointTextContainer> nodes;
 	private final List<SymbolContainer> pointSymbols;
@@ -108,7 +108,7 @@ public class DatabaseRenderer implements RenderCallback {
 		this.graphicFactory = graphicFactory;
 
 		this.canvasRasterer = new CanvasRasterer(graphicFactory);
-		this.labelPlacement = new LabelPlacement();
+		this.dependencyCache = new DependencyCache();
 
 		this.ways = new ArrayList<List<List<ShapePaintContainer>>>(LAYERS);
 		this.wayNames = new ArrayList<WayTextContainer>(64);
@@ -188,7 +188,8 @@ public class DatabaseRenderer implements RenderCallback {
 			}
 		}
 
-		this.nodes = this.labelPlacement.placeLabels(this.nodes, this.pointSymbols, this.areaLabels, rendererJob.tile);
+		this.dependencyCache.setCurrentTile(rendererJob.tile);
+		this.nodes = LabelPlacement.placeLabels(this.nodes, this.pointSymbols, this.areaLabels, this.dependencyCache);
 
 		Bitmap bitmap = this.graphicFactory.createBitmap(Tile.TILE_SIZE, Tile.TILE_SIZE);
 		this.canvasRasterer.setCanvasBitmap(bitmap);
