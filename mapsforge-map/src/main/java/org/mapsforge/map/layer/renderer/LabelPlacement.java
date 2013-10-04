@@ -244,9 +244,8 @@ class LabelPlacement {
 
 		// creates the reference positions
 		for (int z = 0; z < labels.size(); z++) {
-			if (labels.get(z) != null) {
-				if (labels.get(z).symbol != null) {
-					final PointTextContainer tmp = labels.get(z);
+				final PointTextContainer tmp = labels.get(z);
+				if (tmp.symbol != null) {
 
 					// up
 					refPos[z * 4] = new ReferencePosition(tmp.x - tmp.boundary.getWidth() / 2, tmp.y
@@ -264,13 +263,12 @@ class LabelPlacement {
 					refPos[z * 4 + 3] = new ReferencePosition(tmp.x + tmp.symbol.symbol.getWidth() / 2 + distance, tmp.y
 							+ tmp.boundary.getHeight() / 2 - 0.1f, z, tmp.boundary.getWidth(), tmp.boundary.getHeight());
 				} else {
-					refPos[z * 4] = new ReferencePosition(labels.get(z).x - ((labels.get(z).boundary.getWidth()) / 2),
-							labels.get(z).y, z, labels.get(z).boundary.getWidth(), labels.get(z).boundary.getHeight());
+					refPos[z * 4] = new ReferencePosition(tmp.x - ((tmp.boundary.getWidth()) / 2),
+							tmp.y, z, tmp.boundary.getWidth(), tmp.boundary.getHeight());
 					refPos[z * 4 + 1] = null;
 					refPos[z * 4 + 2] = null;
 					refPos[z * 4 + 3] = null;
 				}
-			}
 		}
 
 		removeNonValidateReferencePositionSymbols(refPos, symbols);
