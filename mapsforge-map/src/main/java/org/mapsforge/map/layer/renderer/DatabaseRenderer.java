@@ -88,7 +88,6 @@ public class DatabaseRenderer implements RenderCallback {
 	private RenderTheme previousJobTheme;
 	private float previousTextScale;
 	private byte previousZoomLevel;
-	private ShapeContainer shapeContainer;
 	private final List<WayTextContainer> wayNames;
 	private final List<List<List<ShapePaintContainer>>> ways;
 	private final List<SymbolContainer> waySymbols;
@@ -173,7 +172,6 @@ public class DatabaseRenderer implements RenderCallback {
 						this.coordinates[i][j] = scaleLatLong(latLongs[i][j], rendererJob.tile);
 					}
 				}
-				this.shapeContainer = new PolylineContainer(this.coordinates);
 
 				if (DatabaseRenderer.isClosedWay(this.coordinates[0])) {
 					jobTheme.matchClosedWay(this, way.tags, rendererJob.tile.zoomLevel);
@@ -185,7 +183,6 @@ public class DatabaseRenderer implements RenderCallback {
 			if (mapReadResult.isWater) {
 				this.drawingLayers = this.ways.get(0);
 				this.coordinates = WATER_TILE_COORDINATES;
-				this.shapeContainer = new PolylineContainer(this.coordinates);
 				jobTheme.matchClosedWay(this, Arrays.asList(TAG_NATURAL_WATER), rendererJob.tile.zoomLevel);
 			}
 		}
@@ -210,8 +207,9 @@ public class DatabaseRenderer implements RenderCallback {
 	@Override
 	public void renderArea(Paint fill, Paint stroke, int level) {
 		List<ShapePaintContainer> list = this.drawingLayers.get(level);
-		list.add(new ShapePaintContainer(this.shapeContainer, fill));
-		list.add(new ShapePaintContainer(this.shapeContainer, stroke));
+		final PolylineContainer polylineContainer = new PolylineContainer(this.coordinates);
+		list.add(new ShapePaintContainer(polylineContainer, fill));
+		list.add(new ShapePaintContainer(polylineContainer, stroke));
 	}
 
 	@Override
@@ -256,7 +254,8 @@ public class DatabaseRenderer implements RenderCallback {
 
 	@Override
 	public void renderWay(Paint stroke, int level) {
-		this.drawingLayers.get(level).add(new ShapePaintContainer(this.shapeContainer, stroke));
+		final PolylineContainer polylineContainer = new PolylineContainer(this.coordinates);
+		this.drawingLayers.get(level).add(new ShapePaintContainer(polylineContainer, stroke));
 	}
 
 	@Override
