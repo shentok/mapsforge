@@ -783,15 +783,13 @@ class DependencyCache {
 	}
 
 	private void removeOverlappingLabelsWithDependencyLabels(List<PointTextContainer> labels) {
-		for (int i = 0; i < this.currentDependencyOnTile.labels.size(); i++) {
+		for (Dependency<PointTextContainer> dep : this.currentDependencyOnTile.labels) {
 			for (int x = 0; x < labels.size(); x++) {
-				if ((labels.get(x).text.equals(this.currentDependencyOnTile.labels.get(i).value.text))
-						&& (labels.get(x).paintFront
-								.equals(this.currentDependencyOnTile.labels.get(i).value.paintFront))
-						&& (labels.get(x).paintBack.equals(this.currentDependencyOnTile.labels.get(i).value.paintBack))) {
+				if ((labels.get(x).text.equals(dep.value.text))
+						&& (labels.get(x).paintFront.equals(dep.value.paintFront))
+						&& (labels.get(x).paintBack.equals(dep.value.paintBack))) {
 					labels.remove(x);
-					i--;
-					break;
+					x--;
 				}
 			}
 		}
