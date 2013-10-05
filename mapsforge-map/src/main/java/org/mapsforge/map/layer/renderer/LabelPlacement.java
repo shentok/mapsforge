@@ -268,7 +268,9 @@ class LabelPlacement {
 
 		removeNonValidateReferencePositionSymbols(refPos, symbols);
 		removeNonValidateReferencePositionAreaLabels(refPos, areaLabels);
-		dependencyCache.removeReferencePointsFromDependencyCache(refPos);
+		dependencyCache.removeOutOfTileReferencePoints(refPos);
+		dependencyCache.removeOverlappingLabels(refPos);
+		dependencyCache.removeOverlappingSymbols(refPos);
 
 		// lists that sorts the reference points after the minimum top edge y position
 		PriorityQueue<ReferencePosition> priorUp = new PriorityQueue<ReferencePosition>(labels.size() * 4 * 2

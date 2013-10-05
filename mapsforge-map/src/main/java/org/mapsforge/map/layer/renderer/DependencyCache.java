@@ -236,7 +236,7 @@ class DependencyCache {
 	 * @param refPos
 	 *            possible label positions form the two or four point Greedy
 	 */
-	void removeReferencePointsFromDependencyCache(LabelPlacement.ReferencePosition[] refPos) {
+	void removeOutOfTileReferencePoints(LabelPlacement.ReferencePosition[] refPos) {
 		final long maxTileNumber = Tile.getMaxTileNumber(this.currentTile.zoomLevel);
 
 		boolean left = false;
@@ -293,11 +293,18 @@ class DependencyCache {
 				refPos[i] = null;
 			}
 		}
+	}
 
-		// removes all Reverence Points that intersects with Labels from the Dependency Cache
+	/**
+	 * @brief Removes all Reference Points that intersects with Labels from the Dependency Cache 
+	 * @param refPos
+	 */
+	void removeOverlappingLabels(LabelPlacement.ReferencePosition[] refPos) {
+		if (this.currentDependencyOnTile == null) {
+			throw new IllegalArgumentException();
+		}
 
 		int dis = 2;
-		if (this.currentDependencyOnTile != null) {
 			if (this.currentDependencyOnTile.labels != null) {
 				for (int i = 0; i < this.currentDependencyOnTile.labels.size(); i++) {
 					final Dependency<PointTextContainer> depLabel = this.currentDependencyOnTile.labels.get(i);
@@ -318,6 +325,13 @@ class DependencyCache {
 					}
 				}
 			}
+	}
+
+	void removeOverlappingSymbols(LabelPlacement.ReferencePosition[] refPos) {
+		if (this.currentDependencyOnTile == null) {
+			throw new IllegalArgumentException();
+		}
+
 			if (this.currentDependencyOnTile.symbols != null) {
 				for (Dependency<Bitmap> symbols2 : this.currentDependencyOnTile.symbols) {
 					final Rectangle rect1 = new Rectangle((int) symbols2.point.x, (int) (symbols2.point.y),
@@ -336,7 +350,6 @@ class DependencyCache {
 					}
 				}
 			}
-		}
 	}
 
 	void removeSymbolsFromDrawnAreas(List<SymbolContainer> symbols) {
