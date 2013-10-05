@@ -115,9 +115,9 @@ class DependencyCache {
 			List<PointTextContainer> areaLabels) {
 		this.currentDependencyOnTile.drawn = true;
 
-		if ((!labels.isEmpty()) || (!symbols.isEmpty()) || (!areaLabels.isEmpty())) {
-			fillDependencyOnTile2(labels, symbols, areaLabels);
-		}
+		fillDependencyLabels(labels);
+		fillDependencyLabels(areaLabels);
+		fillDependencySymbols(symbols);
 
 		if (this.currentDependencyOnTile.labels != null) {
 			addLabelsFromDependencyOnTile(labels);
@@ -138,6 +138,41 @@ class DependencyCache {
 			this.dependencyTable.put(this.currentTile, new DependencyOnTile());
 		}
 		this.currentDependencyOnTile = this.dependencyTable.get(this.currentTile);
+
+		Tile left = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY, this.currentTile.zoomLevel);
+		Tile right = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY, this.currentTile.zoomLevel);
+		Tile up = new Tile(this.currentTile.tileX, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
+		Tile down = new Tile(this.currentTile.tileX, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
+
+		Tile leftup = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
+		Tile leftdown = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
+		Tile rightup = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
+		Tile rightdown = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
+
+		if (this.dependencyTable.get(up) == null) {
+			this.dependencyTable.put(up, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(down) == null) {
+			this.dependencyTable.put(down, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(left) == null) {
+			this.dependencyTable.put(left, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(right) == null) {
+			this.dependencyTable.put(right, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(leftdown) == null) {
+			this.dependencyTable.put(leftdown, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(rightup) == null) {
+			this.dependencyTable.put(rightup, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(leftup) == null) {
+			this.dependencyTable.put(leftup, new DependencyOnTile());
+		}
+		if (this.dependencyTable.get(rightdown) == null) {
+			this.dependencyTable.put(rightdown, new DependencyOnTile());
+		}
 	}
 
 	/**
@@ -152,29 +187,25 @@ class DependencyCache {
 		boolean left = false;
 		if (this.currentTile.tileX > 0) {
 			final Tile lefttmp = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(lefttmp);
-			left = tmp == null ? false : tmp.drawn;
+			left = this.dependencyTable.get(lefttmp).drawn;
 		}
 
 		boolean right = false;
 		if (this.currentTile.tileX < maxTileNumber) {
 			final Tile righttmp = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(righttmp);
-			right = tmp == null ? false : tmp.drawn;
+			right = this.dependencyTable.get(righttmp).drawn;
 		}
 
 		boolean up = false;
 		if (this.currentTile.tileY > 0) {
 			final Tile uptmp = new Tile(this.currentTile.tileX, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(uptmp);
-			up = tmp == null ? false : tmp.drawn;
+			up = this.dependencyTable.get(uptmp).drawn;
 		}
 
 		boolean down = false;
 		if (this.currentTile.tileY < maxTileNumber) {
 			final Tile downtmp = new Tile(this.currentTile.tileX, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(downtmp);
-			down = tmp == null ? false : tmp.drawn;
+			down = this.dependencyTable.get(downtmp).drawn;
 		}
 
 		for (int i = 0; i < areaLabels.size(); i++) {
@@ -242,29 +273,25 @@ class DependencyCache {
 		boolean left = false;
 		if (this.currentTile.tileX > 0) {
 			final Tile lefttmp = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(lefttmp);
-			left = tmp == null ? false : tmp.drawn;
+			left = this.dependencyTable.get(lefttmp).drawn;
 		}
 
 		boolean right = false;
 		if (this.currentTile.tileX < maxTileNumber) {
 			final Tile righttmp = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(righttmp);
-			right = tmp == null ? false : tmp.drawn;
+			right = this.dependencyTable.get(righttmp).drawn;
 		}
 
 		boolean up = false;
 		if (this.currentTile.tileY > 0) {
 			final Tile uptmp = new Tile(this.currentTile.tileX, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(uptmp);
-			up = tmp == null ? false : tmp.drawn;
+			up = this.dependencyTable.get(uptmp).drawn;
 		}
 
 		boolean down = false;
 		if (this.currentTile.tileY < maxTileNumber) {
 			final Tile downtmp = new Tile(this.currentTile.tileX, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(downtmp);
-			down = tmp == null ? false : tmp.drawn;
+			down = this.dependencyTable.get(downtmp).drawn;
 		}
 
 		for (int i = 0; i < refPos.length; i++) {
@@ -357,29 +384,25 @@ class DependencyCache {
 		boolean left = false;
 		if (this.currentTile.tileX > 0) {
 			final Tile lefttmp = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(lefttmp);
-			left = tmp == null ? false : tmp.drawn;
+			left = this.dependencyTable.get(lefttmp).drawn;
 		}
 
 		boolean right = false;
 		if (this.currentTile.tileX < maxTileNumber) {
 			final Tile righttmp = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(righttmp);
-			right = tmp == null ? false : tmp.drawn;
+			right = this.dependencyTable.get(righttmp).drawn;
 		}
 
 		boolean up = false;
 		if (this.currentTile.tileY > 0) {
 			final Tile uptmp = new Tile(this.currentTile.tileX, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(uptmp);
-			up = tmp == null ? false : tmp.drawn;
+			up = this.dependencyTable.get(uptmp).drawn;
 		}
 
 		boolean down = false;
 		if (this.currentTile.tileY < maxTileNumber) {
 			final Tile downtmp = new Tile(this.currentTile.tileX, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
-			final DependencyOnTile tmp = this.dependencyTable.get(downtmp);
-			down = tmp == null ? false : tmp.drawn;
+			down = this.dependencyTable.get(downtmp).drawn;
 		}
 
 		for (int i = 0; i < symbols.size(); i++) {
@@ -617,48 +640,6 @@ class DependencyCache {
 				}
 			}
 		}
-	}
-
-	private void fillDependencyOnTile2(List<PointTextContainer> labels, List<SymbolContainer> symbols,
-			List<PointTextContainer> areaLabels) {
-		Tile left = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-		Tile right = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY, this.currentTile.zoomLevel);
-		Tile up = new Tile(this.currentTile.tileX, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
-		Tile down = new Tile(this.currentTile.tileX, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
-
-		Tile leftup = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
-		Tile leftdown = new Tile(this.currentTile.tileX - 1, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
-		Tile rightup = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
-		Tile rightdown = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
-
-		if (this.dependencyTable.get(up) == null) {
-			this.dependencyTable.put(up, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(down) == null) {
-			this.dependencyTable.put(down, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(left) == null) {
-			this.dependencyTable.put(left, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(right) == null) {
-			this.dependencyTable.put(right, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(leftdown) == null) {
-			this.dependencyTable.put(leftdown, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(rightup) == null) {
-			this.dependencyTable.put(rightup, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(leftup) == null) {
-			this.dependencyTable.put(leftup, new DependencyOnTile());
-		}
-		if (this.dependencyTable.get(rightdown) == null) {
-			this.dependencyTable.put(rightdown, new DependencyOnTile());
-		}
-
-		fillDependencyLabels(labels);
-		fillDependencyLabels(areaLabels);
-		fillDependencySymbols(symbols);
 	}
 	
 	private void fillDependencySymbols(List<SymbolContainer> symbols) {
