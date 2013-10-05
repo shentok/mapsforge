@@ -306,8 +306,7 @@ class DependencyCache {
 
 		int dis = 2;
 			if (this.currentDependencyOnTile.labels != null) {
-				for (int i = 0; i < this.currentDependencyOnTile.labels.size(); i++) {
-					final Dependency<PointTextContainer> depLabel = this.currentDependencyOnTile.labels.get(i);
+				for (Dependency<PointTextContainer> depLabel : currentDependencyOnTile.labels) {
 					final Rectangle rect1 = new Rectangle((int) depLabel.point.x - dis,
 							(int) (depLabel.point.y - depLabel.value.boundary.getHeight()) - dis,
 							(int) (depLabel.point.x + depLabel.value.boundary.getWidth() + dis),
@@ -411,8 +410,7 @@ class DependencyCache {
 	}
 
 	private void addLabelsFromDependencyOnTile(List<PointTextContainer> labels) {
-		for (int i = 0; i < this.currentDependencyOnTile.labels.size(); i++) {
-			final Dependency<PointTextContainer> depLabel = this.currentDependencyOnTile.labels.get(i);
+		for (Dependency<PointTextContainer> depLabel : this.currentDependencyOnTile.labels) {
 			if (depLabel.value.paintBack != null) {
 				labels.add(new PointTextContainer(depLabel.value.text, depLabel.point.x,
 						depLabel.point.y, depLabel.value.paintFront, depLabel.value.paintBack));
@@ -448,9 +446,7 @@ class DependencyCache {
 		Tile rightup = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY - 1, this.currentTile.zoomLevel);
 		Tile rightdown = new Tile(this.currentTile.tileX + 1, this.currentTile.tileY + 1, this.currentTile.zoomLevel);
 
-		for (int i = 0; i < pTC.size(); i++) {
-			final PointTextContainer label = pTC.get(i);
-
+		for (PointTextContainer label : pTC) {
 			boolean alreadyAdded = false;
 
 			// up
@@ -753,8 +749,7 @@ class DependencyCache {
 	}
 
 	private void removeOverlappingAreaLabelsWithDependencyLabels(List<PointTextContainer> areaLabels) {
-		for (int i = 0; i < this.currentDependencyOnTile.labels.size(); i++) {
-			final Dependency<PointTextContainer> depLabel = this.currentDependencyOnTile.labels.get(i);
+		for (Dependency<PointTextContainer> depLabel : this.currentDependencyOnTile.labels) {
 			final Rectangle rect1 = new Rectangle((int) (depLabel.point.x),
 					(int) (depLabel.point.y - depLabel.value.boundary.getHeight()),
 					(int) (depLabel.point.x + depLabel.value.boundary.getWidth()),
@@ -809,8 +804,7 @@ class DependencyCache {
 	}
 
 	private void removeOverlappingSymbolsWithDepencySymbols(List<SymbolContainer> symbols, int dis) {
-		for (int x = 0; x < this.currentDependencyOnTile.symbols.size(); x++) {
-			final Dependency<Bitmap> sym2 = this.currentDependencyOnTile.symbols.get(x);
+		for (Dependency<Bitmap> sym2 : this.currentDependencyOnTile.symbols) {
 			final Rectangle rect1 = new Rectangle((int) sym2.point.x - dis, (int) sym2.point.y - dis, (int) sym2.point.x
 					+ sym2.value.getWidth() + dis, (int) sym2.point.y + sym2.value.getHeight() + dis);
 
@@ -829,8 +823,7 @@ class DependencyCache {
 	}
 
 	private void removeOverlappingSymbolsWithDependencyLabels(List<SymbolContainer> symbols) {
-		for (int i = 0; i < this.currentDependencyOnTile.labels.size(); i++) {
-			final Dependency<PointTextContainer> depLabel = this.currentDependencyOnTile.labels.get(i);
+		for (Dependency<PointTextContainer> depLabel : this.currentDependencyOnTile.labels) {
 			final Rectangle rect1 = new Rectangle((int) (depLabel.point.x),
 					(int) (depLabel.point.y - depLabel.value.boundary.getHeight()),
 					(int) (depLabel.point.x + depLabel.value.boundary.getWidth()),
