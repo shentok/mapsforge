@@ -151,20 +151,18 @@ public class RenderTheme {
 		MatchingCacheKey matchingCacheKey = new MatchingCacheKey(tags, zoomLevel, closed);
 
 		List<RenderInstruction> matchingList = this.matchingCache.get(matchingCacheKey);
-		if (matchingList != null) {
-			// cache hit
-			for (int i = 0, n = matchingList.size(); i < n; ++i) {
-				matchingList.get(i).renderWay(renderCallback, tags);
+		if (matchingList == null) {
+			// cache miss
+			matchingList = new ArrayList<RenderInstruction>();
+			for (int i = 0, n = this.rulesList.size(); i < n; ++i) {
+				this.rulesList.get(i).matchWay(matchingList, tags, zoomLevel, closed);
 			}
-			return;
+
+			this.matchingCache.put(matchingCacheKey, matchingList);
 		}
 
-		// cache miss
-		matchingList = new ArrayList<RenderInstruction>();
-		for (int i = 0, n = this.rulesList.size(); i < n; ++i) {
-			this.rulesList.get(i).matchWay(renderCallback, tags, zoomLevel, closed, matchingList);
+		for (int i = 0, n = matchingList.size(); i < n; ++i) {
+			matchingList.get(i).renderWay(renderCallback, tags);
 		}
-
-		this.matchingCache.put(matchingCacheKey, matchingList);
 	}
 }

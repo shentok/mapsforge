@@ -67,15 +67,13 @@ abstract class Rule {
 		}
 	}
 
-	void matchWay(RenderCallback renderCallback, List<Tag> tags, byte zoomLevel, Closed closed,
-			List<RenderInstruction> matchingList) {
+	void matchWay(List<RenderInstruction> matchingList, List<Tag> tags, byte zoomLevel, Closed closed) {
 		if (matchesWay(tags, zoomLevel, closed)) {
 			for (int i = 0, n = this.renderInstructions.size(); i < n; ++i) {
-				this.renderInstructions.get(i).renderWay(renderCallback, tags);
 				matchingList.add(this.renderInstructions.get(i));
 			}
 			for (int i = 0, n = this.subRules.size(); i < n; ++i) {
-				this.subRules.get(i).matchWay(renderCallback, tags, zoomLevel, closed, matchingList);
+				this.subRules.get(i).matchWay(matchingList, tags, zoomLevel, closed);
 			}
 		}
 	}
