@@ -93,10 +93,10 @@ public final class MapViewer {
 	}
 
 	private static Layer createTileRendererLayer(TileCache tileCache, MapViewPosition mapViewPosition) throws IOException, SAXException, ParserConfigurationException {
-		final XmlRenderTheme xmlRenderTheme = new ExternalRenderTheme(new File("/windows/d/MoNav/Berlin/rendering_mapsforge/berlin_mtb.map.xml"));
+		final XmlRenderTheme xmlRenderTheme = new ExternalRenderTheme(new File("/home/shentey/Projekte/mapsforge/src/mapsforge-map/src/main/resources/osmarender/osmarender.xml"));
 		final RenderTheme renderTheme = RenderThemeHandler.getRenderTheme(GRAPHIC_FACTORY, xmlRenderTheme);
 		TileRendererLayer tileRendererLayer = new TileRendererLayer(renderTheme, tileCache, mapViewPosition, GRAPHIC_FACTORY);
-		tileRendererLayer.setMapFile(new File("/windows/d/MoNav/Berlin/rendering_mapsforge/map.map"));
+		tileRendererLayer.setMapFile(new File("/windows/d/MoNav/Germany/rendering_mapsforge/map.map"));
 		return tileRendererLayer;
 	}
 
